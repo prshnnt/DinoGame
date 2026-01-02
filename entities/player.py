@@ -35,6 +35,29 @@ class Player:
         self.vx = 0
         self.vy = 0
         self.on_ground = False
+
+        self.kick_timer = 0
+        self.kick_duration = 200
+
+        self.invincible = False
+        self.invincible_timer = 0
+        self.invincible_duration = 1200  # ms
+
+        self.hurt_timer = 0
+        self.hurt_duration = 400
+    
+    def hurt(self, direction):
+        if self.invincible:
+            return
+
+        self.state = PlayerState.HURT
+        self.invincible = True
+        self.invincible_timer = pg.time.get_ticks()
+        self.hurt_timer = pg.time.get_ticks()
+
+        self.vx = 8 * direction
+        self.vy = -6
+
     
     def load_animations(self):
         self.animations = {
@@ -46,14 +69,24 @@ class Player:
             PlayerState.HURT : [self.image]
         }
     def update_state(self):
+        now = pg.time.get_ticks()
+
         if self.state == PlayerState.HURT:
+            if now - self.hurt_timer > self.hurt_duration:
+                self.state = PlayerState.IDLE
             return
+
+        if self.invincible:
+            if now - self.invincible_timer > self.invincible_duration:
+                self.invincible = False
+
         if not self.on_ground:
             self.state = PlayerState.JUMP
-        elif self.vx !=0:
+        elif self.vx != 0:
             self.state = PlayerState.RUN
         else:
             self.state = PlayerState.IDLE
+
     
     def animate(self):
         frames = self.animations[self.state]
@@ -63,7 +96,9 @@ class Player:
             self.frame_index = 0
 
         self.image = frames[int(self.frame_index)]
-        # self.image.fill((200,50,50))
+        self.image.fill((200,50,50))
+        if self.state == PlayerState.KICK:
+            self.image.fill((255,0,0))
 
         if not self.facing_right:
             self.image= pg.transform.flip(self.image,True,False)
@@ -87,7 +122,7 @@ class Player:
             if keys[pg.K_DOWN] and self.on_ground:
                 self.state = PlayerState.DUCK
 
-            elif keys[pg.K_LCTRL]:
+            if keys[pg.K_a]:
                 self.state = PlayerState.KICK
 
     def apply_gravity(self):
@@ -125,6 +160,10 @@ class Player:
         self.animate()
 
 
-    def draw(self,screen,camera:Camera):
-        screen.blit(self.image,camera.apply(self.rect))
+    def draw(self, screen, camera):
+        if self.invincible:
+            if (pg.time.get_ticks() // 100) % 2 == 0:
+                return
+        screen.blit(self.image, camera.apply(self.rect))
+
     
