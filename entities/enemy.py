@@ -1,7 +1,7 @@
 import pygame as pg
 from settings import *
 from entities.platform import Platform
-from entities.player import PlayerState , Player
+from entities.player import  Player
 from core.camera import Camera
 
 class Enemy:
