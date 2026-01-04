@@ -17,5 +17,5 @@ class Level:
         ]
 
         self.enemies = [
-            Enemy(tuple(e)) for e in data["enemies"]
+            Enemy(tuple(e),image.get_height()) for e in data["enemies"]
         ]

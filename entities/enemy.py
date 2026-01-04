@@ -5,8 +5,8 @@ from entities.player import  Player
 from core.camera import Camera
 
 class Enemy:
-    def __init__(self,pos):
-        self.rect:pg.Rect = pg.Rect(pos[0],pos[1],40,50)
+    def __init__(self,pos,ground_height):
+        self.rect:pg.Rect = pg.Rect(pos[0],pos[1]-ground_height,40,50)
         self.vx = -2
         self.vy = 0
 

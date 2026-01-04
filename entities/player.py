@@ -5,6 +5,7 @@ from utils.loader import load_player_sprites
 from utils.player_state import PlayerState
 from enum import Enum
 
+from core.Base import BaseEntity
 
 
 PLAYER_COLOR = (200,50,50)
@@ -17,11 +18,10 @@ class PlayerSprite(Enum):
     TARD = "assets/player/DinoSprites-tard.png"
     VITA = "assets/player/DinoSprites-vita.png"
 
-class Player:
+class Player(BaseEntity):
     def __init__(self,pos,sprite:PlayerSprite = PlayerSprite.DOUX):
+        super().__init__()
         self.state = PlayerState.IDLE
-        self.facing_right = True
-
         # animation 
         self.animations = {}
         self.frame_index = 0
@@ -33,11 +33,6 @@ class Player:
         self.rect.center = (pos[0],pos[1])
         self.load_animations(sprite)
         self.image = self.animations[self.state][0]
-        
-        # movement
-        self.vx = 0
-        self.vy = 0
-        self.on_ground = False
 
         self.kick_timer = 0
         self.kick_duration = 200
@@ -84,22 +79,6 @@ class Player:
         else:
             self.state = PlayerState.IDLE
 
-    
-    def animate(self):
-        frames = self.animations[self.state]
-        
-        self.frame_index += self.animation_speed
-        if self.frame_index>=len(frames):
-            self.frame_index = 0
-
-        self.image = frames[int(self.frame_index)]
-        # self.image.fill((200,50,50))
-        # if self.state == PlayerState.KICK:
-        #     self.image.fill((255,0,0))
-
-        if not self.facing_right:
-            self.image= pg.transform.flip(self.image,True,False).convert_alpha()
-            # self.image.fill((255,0,0))
 
     def handle_input(self):
         keys = pg.key.get_pressed()
@@ -111,9 +90,8 @@ class Player:
             if keys[pg.K_RIGHT]:
                 self.vx = PLAYER_SPEED
                 self.facing_right = True
-            if keys[pg.K_UP] and self.on_ground:
-                self.vy = JUMP_FORCE
-                self.on_ground = False
+            if keys[pg.K_UP]:
+                self.jump()
                 self.state = PlayerState.JUMP
 
             if keys[pg.K_DOWN] and self.on_ground:
@@ -121,16 +99,12 @@ class Player:
 
             if keys[pg.K_a]:
                 self.state = PlayerState.KICK
-
-    def apply_gravity(self):
-        self.vy += GRAVITY
-        if self.vy >MAX_VY:
-            self.vy = MAX_VY
     
     def update(self,dt,platforms):
         self.handle_input()
-
-        self.rect.x += self.vx
+        self.apply_gravity()
+        self.move()
+        
         for platform in platforms:
             if self.rect.colliderect(platform.rect):
                 if self.vx>0:
@@ -138,9 +112,7 @@ class Player:
                 elif self.vx<0:
                     self.rect.left = platform.rect.right
 
-        self.apply_gravity()
 
-        self.rect.y += self.vy
         self.on_ground = False
 
         for platform in platforms:
@@ -154,7 +126,7 @@ class Player:
                     self.vy = 0
         
         self.update_state()
-        self.animate()
+        self.animate(self.state)
 
 
     def draw(self, screen, camera):

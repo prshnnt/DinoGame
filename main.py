@@ -36,13 +36,6 @@ class Game:
         default = pg.image.load("assets/background/ground.png").convert_alpha();
 
         self.load_level(self.level_index)
-        count = self.world_width//default.get_width() + 1
-        platforms = []
-        for i in range(int(-count/2),count):
-            platforms.append(Platform(i*default.get_width(),SCREEN_HEIGHT-default.get_height(),default.get_width(),default.get_height(),default))
-        self.enemies = []
-        for i in platforms:
-            self.platforms.append(i)
 
     def load_level(self, index):
         default = pg.image.load("assets/background/ground.png").convert_alpha()
@@ -51,7 +44,13 @@ class Game:
         player.rect.topleft = self.level.player_start
         self.platforms = self.level.platforms
         self.enemies = self.level.enemies
-
+        platforms = []
+        count = self.world_width//default.get_width() + 1
+        for i in range(int(-count/2),count):
+            platforms.append(Platform(i*default.get_width(),SCREEN_HEIGHT-default.get_height(),default.get_width(),default.get_height(),default))
+        self.enemies = []
+        for i in platforms:
+            self.platforms.append(i)
         self.camera.camera_rect.x = 0
 
     def handle_events(self):
