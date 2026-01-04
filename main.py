@@ -6,6 +6,9 @@ from entities.enemy import Enemy
 from entities.platform import Platform
 from core.camera import Camera
 from core.screen_shake import ScreenShake
+from core.parallax import ParallaxBackground
+from utils.loader import load_image
+from core.level import Level
 
 
 class Game:
@@ -16,25 +19,40 @@ class Game:
 
         self.clock = pg.time.Clock()
         self.running = True
+        self.level_index = 1
+        self.player = Player((100,SCREEN_HEIGHT-150))
 
         self.world_width = 3000
         self.world_height = SCREEN_HEIGHT
         self.camera = Camera(self.world_width,self.world_height)
         self.screen_shake = ScreenShake()
-        self.player = Player((100,SCREEN_HEIGHT-150))
-        self.platforms = [
-            Platform(0, SCREEN_HEIGHT - GROUND_HEIGHT, SCREEN_WIDTH, GROUND_HEIGHT),   # ground
-            Platform(-SCREEN_WIDTH, SCREEN_HEIGHT - GROUND_HEIGHT, SCREEN_WIDTH, GROUND_HEIGHT),   # ground
-            Platform(SCREEN_WIDTH*2, SCREEN_HEIGHT - GROUND_HEIGHT, SCREEN_WIDTH, GROUND_HEIGHT),   # ground
-            Platform(300, 400, 200, 30),
-            Platform(600, 300, 200, 30),
-            Platform(200, 250, 150, 30)
-        ]
-        self.enemies = [
-            Enemy((500, SCREEN_HEIGHT-100)),
-            Enemy((800, SCREEN_HEIGHT-100))
-        ]
+        self.parallax = ParallaxBackground()
+        for i in range(1,6):
+            self.parallax.add_layer(
+                load_image(f"assets/background/plx-{i}.png"),i*0.2
+            )
 
+
+        default = pg.image.load("assets/background/ground.png").convert_alpha();
+
+        self.load_level(self.level_index)
+        count = self.world_width//default.get_width() + 1
+        platforms = []
+        for i in range(int(-count/2),count):
+            platforms.append(Platform(i*default.get_width(),SCREEN_HEIGHT-default.get_height(),default.get_width(),default.get_height(),default))
+        self.enemies = []
+        for i in platforms:
+            self.platforms.append(i)
+
+    def load_level(self, index):
+        default = pg.image.load("assets/background/ground.png").convert_alpha()
+        self.level = Level(f"levels/level{index}.json",default)
+        player = self.player
+        player.rect.topleft = self.level.player_start
+        self.platforms = self.level.platforms
+        self.enemies = self.level.enemies
+
+        self.camera.camera_rect.x = 0
 
     def handle_events(self):
         for event in pg.event.get():
@@ -66,6 +84,10 @@ class Game:
 
 
     def update(self,dt):
+        if self.player.rect.x >= self.level.end_x:
+            self.level_index += 1
+            self.load_level(self.level_index)
+
         self.player.update(dt,self.platforms)
 
         for enemy in self.enemies:
@@ -78,12 +100,11 @@ class Game:
         offset_x, offset_y = self.screen_shake.update()
 
         self.screen.fill(SKY_BLUE)
+        # draw parallax FIRST
+        self.parallax.draw(self.screen, self.camera.camera_rect.x + offset_x)
+
         for platform in self.platforms:
-            pg.draw.rect(
-                self.screen,
-                (100, 100, 100),
-                self.camera.apply(platform.rect).move(offset_x,offset_y)
-            )
+            platform.draw(self.screen,self.camera.apply(platform.rect).move(offset_x,offset_y))
         self.player.draw(self.screen,self.camera)
         for enemy in self.enemies:
             enemy.draw(self.screen,self.camera)

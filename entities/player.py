@@ -1,23 +1,24 @@
 import pygame as pg
 from settings import *
 from core.camera import Camera
-PLAYER_COLOR = (200,50,50)
-
-# entities/player_states.py
-
+from utils.loader import load_player_sprites
+from utils.player_state import PlayerState
 from enum import Enum
 
-class PlayerState(Enum):
-    IDLE = "idle"
-    RUN = "run"
-    JUMP = "jump"
-    DUCK = "duck"
-    KICK = "kick"
-    HURT = "hurt"
 
+
+PLAYER_COLOR = (200,50,50)
+
+
+
+class PlayerSprite(Enum):
+    DOUX = "assets/player/DinoSprites-doux.png"
+    MORT = "assets/player/DinoSprites-mort.png"
+    TARD = "assets/player/DinoSprites-tard.png"
+    VITA = "assets/player/DinoSprites-vita.png"
 
 class Player:
-    def __init__(self,pos):
+    def __init__(self,pos,sprite:PlayerSprite = PlayerSprite.DOUX):
         self.state = PlayerState.IDLE
         self.facing_right = True
 
@@ -25,13 +26,15 @@ class Player:
         self.animations = {}
         self.frame_index = 0
         self.animation_speed = 0.15
-        self.image = pg.Surface((40,60))
-        self.image.fill((200,50,50))
-        self.load_animations()
+        self.image = pg.Surface((24*3,21*3))
+        # self.image.fill((200,50,50))
 
         self.rect = self.image.get_rect()
         self.rect.center = (pos[0],pos[1])
-
+        self.load_animations(sprite)
+        self.image = self.animations[self.state][0]
+        
+        # movement
         self.vx = 0
         self.vy = 0
         self.on_ground = False
@@ -59,15 +62,9 @@ class Player:
         self.vy = -6
 
     
-    def load_animations(self):
-        self.animations = {
-            PlayerState.IDLE : [self.image],
-            PlayerState.RUN : [self.image],
-            PlayerState.JUMP : [self.image],
-            PlayerState.DUCK : [self.image],
-            PlayerState.KICK : [self.image],
-            PlayerState.HURT : [self.image]
-        }
+    def load_animations(self,sprite:PlayerSprite):
+        self.animations = load_player_sprites(sprite.value,(self.rect.w,self.rect.h))
+        
     def update_state(self):
         now = pg.time.get_ticks()
 
@@ -96,12 +93,12 @@ class Player:
             self.frame_index = 0
 
         self.image = frames[int(self.frame_index)]
-        self.image.fill((200,50,50))
-        if self.state == PlayerState.KICK:
-            self.image.fill((255,0,0))
+        # self.image.fill((200,50,50))
+        # if self.state == PlayerState.KICK:
+        #     self.image.fill((255,0,0))
 
         if not self.facing_right:
-            self.image= pg.transform.flip(self.image,True,False)
+            self.image= pg.transform.flip(self.image,True,False).convert_alpha()
             # self.image.fill((255,0,0))
 
     def handle_input(self):

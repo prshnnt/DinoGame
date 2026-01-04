@@ -27,8 +27,6 @@ class Enemy:
         if self.vy > MAX_VY:
             self.vy = MAX_VY
     def change_direction(self):
-        # if self.facing_right != (self.vx < 0):
-        #     self.vx = 0
         self.facing_right = self.vx < 0
 
         
@@ -46,7 +44,7 @@ class Enemy:
                 self.vx = abs(self.vx)
             else:
                 self.vx = -abs(self.vx)
-
+                
         self.change_direction()
         # X movement
         self.rect.x += self.vx
