@@ -9,14 +9,24 @@ class BaseObject:
         self.vy = 0
 
         self.image:pg.Surface = None
+        self.rect:pg.Rect = None
+        self.mask:pg.Mask = None
+
+    def set_image(self,image:pg.Surface):
+        self.image = image
         self.rect = self.image.get_rect()
         self.rect.topleft = (self.x,self.y)
         self.mask = pg.mask.from_surface(self.image)
 
-    def move(self):
+    def move_x(self):
         self.x += self.vx
+        self.rect.x = round(self.x)
+        
+    def move_y(self):
         self.y += self.vy
-        self.rect.topleft = (self.x,self.y)
+        self.rect.y = round(self.y)
+
+    
 
         
 class BaseEntity(BaseObject):
@@ -50,15 +60,15 @@ class BaseEntity(BaseObject):
             self.frame_index += 1
             if self.frame_index >= len(self.animations[state]):
                 self.frame_index = 0
-            # update image
-            self.image = self.animations[state][self.frame_index]
+            # update image 
+            self.set_image(self.animations[state][self.frame_index])
             self.animation_last_update = current_time
             if not self.facing_right:
                 self.flip_image()
 
 
     def flip_image(self):
-        self.image = pg.transform.flip(self.image, True, False)
+        self.image = pg.transform.flip(self.image, True, False).convert_alpha()
         self.mask = pg.mask.from_surface(self.image)
 
     def add_health(self,amount):

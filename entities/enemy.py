@@ -3,33 +3,36 @@ from settings import *
 from entities.platform import Platform
 from entities.player import  Player
 from core.camera import Camera
+from core.Base import BaseEntity
 
-class Enemy:
+
+class Enemy(BaseEntity):
     def __init__(self,pos,ground_height):
-        self.rect:pg.Rect = pg.Rect(pos[0],pos[1]-ground_height,40,50)
+        super().__init__()
+        # --- ADD THESE LINES ---
+        self.x = pos[0]
+        self.y = pos[1]
+        # -----------------------
+
         self.vx = -2
-        self.vy = 0
+
+        self.image: pg.Surface = pg.Surface((40, 50))
+        self.image.fill((50, 50, 200))
+        
+        # set_image will now use the correct self.x and self.y
+        self.set_image(self.image) 
 
         self.on_ground = False
         self.alive = True
         self.active = False # only move when active
 
-        self.image = pg.Surface((40,50))
-        self.image.fill((50,50,200))
-
         self.pause_time = 0
         self.pause_duration = 500
         self.speed = 2
-        self.facing_right = True
 
-    def apply_gravity(self):
-        self.vy +=GRAVITY
-        if self.vy > MAX_VY:
-            self.vy = MAX_VY
     def change_direction(self):
         self.facing_right = self.vx < 0
 
-        
     def update(self,platforms:list[Platform],camera:Camera,player:Player):
         if not self.alive:
             return
@@ -45,9 +48,10 @@ class Enemy:
             else:
                 self.vx = -abs(self.vx)
                 
-        self.change_direction()
+        self.apply_gravity()
+        self.move_x()
+        
         # X movement
-        self.rect.x += self.vx
         for platform in platforms:
             if self.rect.colliderect(platform.rect):
                 if self.vx > 0:
@@ -55,13 +59,13 @@ class Enemy:
                 else:
                     self.rect.left = platform.rect.right
                 self.vx *= -1  # turn around
+                self.change_direction()
+                self.x = self.rect.x
+
 
         # Gravity
-        self.apply_gravity()
-
-        # Y movement
-        self.rect.y += self.vy
         self.on_ground = False
+        self.move_y()
 
         for platform in platforms:
             if self.rect.colliderect(platform.rect):
@@ -72,6 +76,9 @@ class Enemy:
                 elif self.vy < 0:
                     self.rect.top = platform.rect.bottom
                     self.vy = 0
+
+                self.y = self.rect.y
+
         if self.vx == 0:
             if pg.time.get_ticks() - self.pause_time > self.pause_duration:
                 self.vx = self.speed if self.vx <= 0 else -self.speed

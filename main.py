@@ -48,7 +48,6 @@ class Game:
         count = self.world_width//default.get_width() + 1
         for i in range(int(-count/2),count):
             platforms.append(Platform(i*default.get_width(),SCREEN_HEIGHT-default.get_height(),default.get_width(),default.get_height(),default))
-        self.enemies = []
         for i in platforms:
             self.platforms.append(i)
         self.camera.camera_rect.x = 0

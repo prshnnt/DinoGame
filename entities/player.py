@@ -1,6 +1,6 @@
 import pygame as pg
+from entities.platform import Platform
 from settings import *
-from core.camera import Camera
 from utils.loader import load_player_sprites
 from utils.player_state import PlayerState
 from enum import Enum
@@ -44,42 +44,6 @@ class Player(BaseEntity):
         self.hurt_timer = 0
         self.hurt_duration = 400
     
-    def hurt(self, direction):
-        if self.invincible:
-            return
-
-        self.state = PlayerState.HURT
-        self.invincible = True
-        self.invincible_timer = pg.time.get_ticks()
-        self.hurt_timer = pg.time.get_ticks()
-
-        self.vx = 8 * direction
-        self.vy = -6
-
-    
-    def load_animations(self,sprite:PlayerSprite):
-        self.animations = load_player_sprites(sprite.value,(self.rect.w,self.rect.h))
-        
-    def update_state(self):
-        now = pg.time.get_ticks()
-
-        if self.state == PlayerState.HURT:
-            if now - self.hurt_timer > self.hurt_duration:
-                self.state = PlayerState.IDLE
-            return
-
-        if self.invincible:
-            if now - self.invincible_timer > self.invincible_duration:
-                self.invincible = False
-
-        if not self.on_ground:
-            self.state = PlayerState.JUMP
-        elif self.vx != 0:
-            self.state = PlayerState.RUN
-        else:
-            self.state = PlayerState.IDLE
-
-
     def handle_input(self):
         keys = pg.key.get_pressed()
         self.vx = 0
@@ -93,38 +57,82 @@ class Player(BaseEntity):
             if keys[pg.K_UP]:
                 self.jump()
                 self.state = PlayerState.JUMP
-
             if keys[pg.K_DOWN] and self.on_ground:
                 self.state = PlayerState.DUCK
-
             if keys[pg.K_a]:
                 self.state = PlayerState.KICK
+                
+    def load_animations(self,sprite:PlayerSprite):
+        self.animations = load_player_sprites(sprite.value,(self.rect.w,self.rect.h))
+
+    def hurt(self, direction):
+        if self.invincible:
+            return
+        self.state = PlayerState.HURT
+        self.invincible = True
+        self.invincible_timer = pg.time.get_ticks()
+        self.hurt_timer = pg.time.get_ticks()
+
+        self.vx = 8 * direction
+        self.vy = -6
+
     
-    def update(self,dt,platforms):
-        self.handle_input()
-        self.apply_gravity()
-        self.move()
         
+    def update_state(self):
+        now = pg.time.get_ticks()
+
+        if self.state == PlayerState.HURT:
+            if now - self.hurt_timer > self.hurt_duration:
+                self.state = PlayerState.IDLE
+            return
+        if self.invincible:
+            if now - self.invincible_timer > self.invincible_duration:
+                self.invincible = False
+        if not self.on_ground:
+            self.state = PlayerState.JUMP
+        elif self.vx != 0:
+            self.state = PlayerState.RUN
+        else:
+            self.state = PlayerState.IDLE
+
+
+
+    def collide_wall(self,platforms:list[Platform]):
+        # --- X AXIS MOVEMENT ---
+        self.move_x()
+        # X Collision Check
         for platform in platforms:
             if self.rect.colliderect(platform.rect):
-                if self.vx>0:
+                if self.vx > 0:
                     self.rect.right = platform.rect.left
-                elif self.vx<0:
+                elif self.vx < 0:
                     self.rect.left = platform.rect.right
+                
+                # CRITICAL FIX: Sync self.x with the new rect position
+                self.x = self.rect.x 
 
-
+        # --- Y AXIS MOVEMENT ---
         self.on_ground = False
-
+        self.move_y()
+        # Y Collision Check
         for platform in platforms:
             if self.rect.colliderect(platform.rect):
-                if self.vy>0:
+                if self.vy > 0:
                     self.rect.bottom = platform.rect.top
                     self.vy = 0
-                    self.on_ground =True
-                elif self.vy<0:
+                    self.on_ground = True
+                elif self.vy < 0:
                     self.rect.top = platform.rect.bottom
                     self.vy = 0
+                
+                # CRITICAL FIX: Sync self.y with the new rect position
+                self.y = self.rect.y
         
+
+    def update(self, dt, platforms):
+        self.handle_input()
+        self.apply_gravity()
+        self.collide_wall(platforms)
         self.update_state()
         self.animate(self.state)
 
