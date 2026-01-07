@@ -1,7 +1,7 @@
 import pygame as pg
 from entities.platform import Platform
 from settings import *
-from utils.loader import load_player_sprites
+from utils.boundingbox import load_animation
 from utils.player_state import PlayerState
 from enum import Enum
 
@@ -25,14 +25,14 @@ class Player(BaseEntity):
         # animation 
         self.animations = {}
         self.frame_index = 0
-        self.animation_speed = 0.15
-        self.image = pg.Surface((24*3,21*3))
-        # self.image.fill((200,50,50))
+        self.animation_duration= 100
+        self.load_animations(sprite,(3,3))
+        self.image = self.animations[self.state][0]
 
         self.rect = self.image.get_rect()
         self.rect.center = (pos[0],pos[1])
-        self.load_animations(sprite)
-        self.image = self.animations[self.state][0]
+        self.x = self.rect.x
+        self.y = self.rect.y
 
         self.kick_timer = 0
         self.kick_duration = 200
@@ -62,8 +62,13 @@ class Player(BaseEntity):
             if keys[pg.K_a]:
                 self.state = PlayerState.KICK
                 
-    def load_animations(self,sprite:PlayerSprite):
-        self.animations = load_player_sprites(sprite.value,(self.rect.w,self.rect.h))
+    def load_animations(self,sprite:PlayerSprite,scale):
+        animations = load_animation(sprite.value,"assets/player/player_bb.json",scale)
+        temp = {}
+        for i in animations.keys():
+            temp[PlayerState(i)] = animations[i]
+        self.animations = temp
+        print(temp)
 
     def hurt(self, direction):
         if self.invincible:

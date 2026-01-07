@@ -32,9 +32,6 @@ class Game:
                 load_image(f"assets/background/plx-{i}.png"),i*0.2
             )
 
-
-        default = pg.image.load("assets/background/ground.png").convert_alpha();
-
         self.load_level(self.level_index)
 
     def load_level(self, index):
