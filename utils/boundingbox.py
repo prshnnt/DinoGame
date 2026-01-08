@@ -18,10 +18,10 @@ def load_bb(bb_path):
         animations_bblist[i] = temp
     return animations_bblist
 def get_frame_from_image(image:pygame.Surface,frame_bb,scale):
-    frame = pygame.Surface((frame_bb['w'],frame_bb['h'])).convert_alpha()
+    frame = pygame.Surface((frame_bb['w'],frame_bb['h']),pygame.SRCALPHA).convert_alpha()
     frame.blit(image,(0,0),(frame_bb['x'],frame_bb['y'],frame_bb['w'],frame_bb['h']))
-    frame = pygame.transform.scale(frame,(frame_bb['w']*scale[0],frame_bb['h']*scale[1])).convert_alpha()
-    return frame
+    frame = pygame.transform.scale(frame,(frame_bb['w']*scale[0],frame_bb['h']*scale[1]))
+    return frame.convert_alpha()
 def extract_frames(image_path,animation_bblist:dict,scale):
     image = pygame.image.load(image_path).convert_alpha()
     animations = {}

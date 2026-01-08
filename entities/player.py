@@ -19,7 +19,7 @@ class PlayerSprite(Enum):
     VITA = "assets/player/DinoSprites-vita.png"
 
 class Player(BaseEntity):
-    def __init__(self,pos,sprite:PlayerSprite = PlayerSprite.DOUX):
+    def __init__(self,pos,sprite:PlayerSprite = PlayerSprite.TARD):
         super().__init__()
         self.state = PlayerState.IDLE
         # animation 
@@ -68,7 +68,6 @@ class Player(BaseEntity):
         for i in animations.keys():
             temp[PlayerState(i)] = animations[i]
         self.animations = temp
-        print(temp)
 
     def hurt(self, direction):
         if self.invincible:

@@ -15,7 +15,8 @@ class BaseObject:
     def set_image(self,image:pg.Surface):
         self.image = image
         self.rect = self.image.get_rect()
-        self.rect.topleft = (self.x,self.y)
+        self.rect.x = self.x
+        self.rect.y = self.y
         self.mask = pg.mask.from_surface(self.image)
 
     def move_x(self):
@@ -40,6 +41,14 @@ class BaseEntity(BaseObject):
         self.frame_index = 0
         self.animation_duration = 100
         self.animation_last_update = pg.time.get_ticks()
+
+    def set_image(self, image: pg.Surface):
+        previous_rect = self.rect
+        super().set_image(image)
+        if previous_rect:
+            self.rect.midbottom = previous_rect.midbottom
+            self.x = self.rect.x
+            self.y = self.rect.y
 
         
     def apply_gravity(self):

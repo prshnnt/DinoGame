@@ -37,8 +37,8 @@ class Game:
     def load_level(self, index):
         default = pg.image.load("assets/background/ground.png").convert_alpha()
         self.level = Level(f"levels/level{index}.json",default)
-        player = self.player
-        player.rect.topleft = self.level.player_start
+        self.player.rect.topleft = self.level.player_start
+        
         self.platforms = self.level.platforms
         self.enemies = self.level.enemies
         platforms = []
@@ -47,7 +47,7 @@ class Game:
             platforms.append(Platform(i*default.get_width(),SCREEN_HEIGHT-default.get_height(),default.get_width(),default.get_height(),default))
         for i in platforms:
             self.platforms.append(i)
-        self.camera.camera_rect.x = 0
+        self.camera.rect.x = 0
 
     def handle_events(self):
         for event in pg.event.get():
@@ -69,7 +69,6 @@ class Game:
                     self.player.vy = JUMP_FORCE/2
                 # player kicking enemy
                 elif self.player.state == PlayerState.KICK:
-                    print(True)
                     enemy.alive = False
                 else:
                     direction = -1 if enemy.rect.centerx > self.player.rect.centerx else 1
@@ -82,6 +81,8 @@ class Game:
         if self.player.rect.x >= self.level.end_x:
             self.level_index += 1
             self.load_level(self.level_index)
+            pg.display.set_caption(f"{TITLE} - Level {self.level_index}")
+            self.screen_shake.start(6)
 
         self.player.update(dt,self.platforms)
 
@@ -96,7 +97,7 @@ class Game:
 
         self.screen.fill(SKY_BLUE)
         # draw parallax FIRST
-        self.parallax.draw(self.screen, self.camera.camera_rect.x + offset_x)
+        self.parallax.draw(self.screen, self.camera.rect.x + offset_x)
 
         for platform in self.platforms:
             platform.draw(self.screen,self.camera.apply(platform.rect).move(offset_x,offset_y))
