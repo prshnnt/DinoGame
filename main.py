@@ -9,9 +9,65 @@ from core.screen_shake import ScreenShake
 from core.parallax import ParallaxBackground
 from utils.loader import load_image
 from core.level import Level
+from core.state import *
 
 
 class Game:
+    def __init__(self):
+        pg.init()
+        self.screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pg.display.set_caption(TITLE)
+        self.clock = pg.time.Clock()
+        self.running = True
+        
+        # Initialize states
+        self.states = {
+            MainState.MENU: MainMenu(),
+            MainState.PAUSED: PauseMenu(),
+            MainState.PLAY: PlayMenu()
+        }
+        self.current_state = MainState.MENU
+
+    def run(self):
+        while self.running:
+            dt = self.clock.tick(FPS) / 1000
+            events = pg.event.get() # Get events once per frame
+
+            # 1. Global Event Handling (Quit)
+            for event in events:
+                if event.type == pg.QUIT:
+                    self.running = False
+            
+            # 2. State Specific Logic
+            if self.current_state in self.states:
+                active_state_obj = self.states[self.current_state]
+                
+                # Pass events to the state, get the NEW state back
+                new_state = active_state_obj.handle_events(events)
+                
+                # Update the state (animations, physics)
+                active_state_obj.update(dt)
+
+                # State Transition Logic
+                if new_state is not None:
+                    if new_state == MainState.QUIT:
+                        self.running = False
+                    else:
+                        self.current_state = new_state
+            
+            # 3. Drawing
+            self.screen.fill(SKY_BLUE)
+            if self.current_state in self.states:
+                self.states[self.current_state].draw(self.screen)
+            
+            pg.display.flip()
+
+        pg.quit()
+        sys.exit()
+
+
+
+class Play:
     def __init__(self):
         pg.init()
         self.screen = pg.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
@@ -19,6 +75,10 @@ class Game:
 
         self.clock = pg.time.Clock()
         self.running = True
+        self.main_state = MainState.MENU
+        self.main_menu = MainMenu()
+        self.pause_menu = PauseMenu()
+        self.play_menu = PlayMenu()
         self.level_index = 1
         self.player = Player((100,SCREEN_HEIGHT-150))
 
