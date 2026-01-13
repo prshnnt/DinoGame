@@ -1,3 +1,4 @@
+from enum import Enum
 import pygame as pg
 import sys
 from settings import *
@@ -9,7 +10,61 @@ from core.screen_shake import ScreenShake
 from core.parallax import ParallaxBackground
 from utils.loader import load_image
 from core.level import Level
-from core.state import MainState
+
+class MainState(Enum):
+    MENU = 'menu'
+    PLAY = 'play'
+    PAUSED = 'paused'
+    QUIT = 'quit'
+
+class Button:
+    def __init__(self, rect:pg.Rect|tuple,image1:pg.Surface,image2:pg.Surface,callback=None):
+        self.rect = pg.Rect(rect)
+        self.image1 = pg.transform.scale(image1,(self.rect.width,self.rect.height)).convert_alpha()
+        self.image2 = pg.transform.scale(image2,(self.rect.width,self.rect.height)).convert_alpha()
+        self.callback = callback
+
+        self.image = self.image1
+        self.hovered = False
+        self.clicked = False
+    def update(self,events,mouse_pos):
+        # call callback function if button state is clicked , bas itna samjho jyada dhyan nhi do code pe
+        if self.callback and self.clicked and pg.mouse.get_pressed()[0] == 0:
+            self.callback()
+            self.clicked = False
+            return
+        # set click state of button to true if clicked and hovered
+        if self.rect.collidepoint(mouse_pos):
+            self.hovered = True
+            self.image = self.image2
+            if pg.mouse.get_pressed()[0] == 1 and not self.clicked:
+                self.clicked = True
+                print("Button clicked!"+str(self.callback))
+                
+        else:
+            # set state to false if not clicked
+            self.clicked = False
+            self.hovered = False
+            self.image = self.image1
+
+
+    def draw(self,screen:pg.Surface):
+        screen.blit(self.image,(self.rect.x,self.rect.y))
+
+class State:
+    def __init__(self,screen:pg.Surface,objects):
+        self.screen = screen
+        self.objects = objects
+    def add_object(self,obj):
+        self.objects.append(obj)
+    def remove_object(self,obj):
+        self.objects.remove(obj)
+    def update(self,events,mouse_pos):
+        for obj in self.objects:
+            obj.update(events,mouse_pos)
+    def draw(self):
+        for obj in self.objects:
+            obj.draw(self.screen)
 
 
 class Game:
@@ -25,28 +80,49 @@ class Game:
         # Initialize states
         self.states = {}
         self.current_state = MainState.MENU
+        self.load_main_menu()
 
-    def hamdle_events(self):
-        events = pg.event.get() # Get events once per frame
-        # 1. Global Event Handling (Quit)
-        for event in events:
+    def set_state(self,state):
+        self.current_state = state
+
+    def load_main_menu(self):
+        self.states[MainState.MENU] = State(self.screen,[])
+
+        self.states[MainState.MENU].add_object(
+            Button(
+                (0,0,300,100),
+                pg.image.load("assets/menu/playbutton_01.png").convert_alpha(),
+                pg.image.load("assets/menu/playbutton_02.png").convert_alpha(),
+                lambda: self.set_state(MainState.PLAY)
+            )
+        )
+    def handle_events(self):
+        self.mouse_pos = pg.mouse.get_pos()
+        self.events = pg.event.get()
+        for event in self.events:
             if event.type == pg.QUIT:
                 self.running = False
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_ESCAPE:
+                    self.running = False
 
     def update(self,dt):
-        pass
+        self.states[self.current_state].update(self.events,self.mouse_pos)
+
+
     def draw(self):
         self.screen.fill(self.bg_color)
+        self.states[self.current_state].draw()
+        pg.draw.circle(self.screen,WHITE,self.mouse_pos,5)
         pg.display.flip()
         pass
+
     def run(self):
         while self.running:
-            dt = self.clock.tick(FPS) / 1000
-            self.hamdle_events()
+            dt = self.clock.tick(FPS)/1000
+            self.handle_events()
             self.update(dt)
             self.draw()
-
-
         pg.quit()
         sys.exit()
 
