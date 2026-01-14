@@ -81,20 +81,62 @@ class Game:
         self.states = {}
         self.current_state = MainState.MENU
         self.load_main_menu()
+        self.load_play_frame()
+        self.load_pause_frame()
 
     def set_state(self,state):
         self.current_state = state
 
     def load_main_menu(self):
         self.states[MainState.MENU] = State(self.screen,[])
+        cx,cy = self.screen.get_rect().center
+
+        box_width = 300
+        box_height = 100
 
         self.states[MainState.MENU].add_object(
             Button(
-                (0,0,300,100),
+                (cx - (box_width//2),(box_height//2)*1,box_width,box_height),
                 pg.image.load("assets/menu/playbutton_01.png").convert_alpha(),
                 pg.image.load("assets/menu/playbutton_02.png").convert_alpha(),
                 lambda: self.set_state(MainState.PLAY)
-            )
+            )   
+        )
+        self.states[MainState.MENU].add_object(
+            Button(
+                (cx - (box_width//2),(box_height//2)*4,box_width,box_height),
+                pg.image.load("assets/menu/options_01.png").convert_alpha(),
+                pg.image.load("assets/menu/options_02.png").convert_alpha(),
+                # lambda: self.set_state(MainState.PLAY)
+            )   
+        )
+        self.states[MainState.MENU].add_object(
+            Button(
+                (cx - (box_width//2),(box_height//2)*7,box_width,box_height),
+                pg.image.load("assets/menu/quit_01.png").convert_alpha(),
+                pg.image.load("assets/menu/quit_02.png").convert_alpha(),
+                lambda: self.set_state(MainState.QUIT)
+            )   
+        )
+    def load_play_frame(self):
+        self.states[MainState.PLAY] = State(self.screen,[])
+        self.states[MainState.PLAY].add_object(
+            Button(
+                (0,0,300,100),
+                pg.image.load("assets/menu/yes_01.png").convert_alpha(),
+                pg.image.load("assets/menu/yes_02.png").convert_alpha(),
+                lambda: self.set_state(MainState.PAUSED)
+            )   
+        )
+    def load_pause_frame(self):
+        self.states[MainState.PAUSED] = State(self.screen,[])
+        self.states[MainState.PAUSED].add_object(
+            Button(
+                (0,0,300,100),
+                pg.image.load("assets/menu/cross_01.png").convert_alpha(),
+                pg.image.load("assets/menu/cross_02.png").convert_alpha(),
+                lambda: self.set_state(MainState.PLAY)
+            )   
         )
     def handle_events(self):
         self.mouse_pos = pg.mouse.get_pos()
@@ -106,11 +148,15 @@ class Game:
                 if event.key == pg.K_ESCAPE:
                     self.running = False
 
+
     def update(self,dt):
         self.states[self.current_state].update(self.events,self.mouse_pos)
 
 
     def draw(self):
+        if self.current_state == MainState.QUIT:
+            self.running = False
+            return
         self.screen.fill(self.bg_color)
         self.states[self.current_state].draw()
         pg.draw.circle(self.screen,WHITE,self.mouse_pos,5)
