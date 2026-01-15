@@ -68,9 +68,16 @@ class State:
 
 
 class Play:
-    def __init__(self,screen):
+    def __init__(self,game):
         pg.init()
-        self.screen = screen
+        self.screen = game.screen
+        self.game = game
+        self.pause_button = Button(
+                (5,5,50,50),
+                pg.image.load("assets/menu/yes_01.png").convert_alpha(),
+                pg.image.load("assets/menu/yes_02.png").convert_alpha(),
+                lambda: self.game.set_state(MainState.PAUSED)
+            )
         pg.display.set_caption(TITLE)
 
         self.clock = pg.time.Clock()
@@ -104,13 +111,6 @@ class Play:
             self.platforms.append(i)
         self.camera.rect.x = 0
 
-    def handle_events(self):
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                self.running = False
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
-                    self.running = False
             
     def handle_enemy_collision(self):
         for enemy in self.enemies:
@@ -133,11 +133,13 @@ class Play:
 
 
     def update(self,dt,x):
+        self.pause_button.update(self.game.events,self.game.mouse_pos)
         if self.player.rect.x >= self.level.end_x:
             self.level_index += 1
+            self.player.rect.x = self.level.player_start[0]
             self.load_level(self.level_index)
             pg.display.set_caption(f"{TITLE} - Level {self.level_index}")
-            self.screen_shake.start(6)
+            self.screen_shake.start(10)
 
         self.player.update(dt,self.platforms)
 
@@ -159,16 +161,15 @@ class Play:
         self.player.draw(self.screen,self.camera)
         for enemy in self.enemies:
             enemy.draw(self.screen,self.camera)
+        
+        self.pause_button.draw(self.screen)
         pg.display.flip()
-    
-    def run(self):
-        while self.running:
-            dt = self.clock.tick(FPS)/1000
-            self.handle_events()
-            self.update(dt)
-            self.draw()
-        pg.quit()
-        sys.exit()
+
+class PlayState(State):
+    def __init__(self,game):
+        super().__init__(game.screen,[])
+        self.play = Play(game)
+        self.add_object(self.play)
 
 
 class Game:
@@ -223,18 +224,8 @@ class Game:
             )   
         )
     def load_play_frame(self):
-        self.states[MainState.PLAY] = State(self.screen,[])
-        self.states[MainState.PLAY].add_object(
-            Play(self.screen)
-        )
-        self.states[MainState.PLAY].add_object(
-            Button(
-                (5,5,50,50),
-                pg.image.load("assets/menu/yes_01.png").convert_alpha(),
-                pg.image.load("assets/menu/yes_02.png").convert_alpha(),
-                lambda: self.set_state(MainState.PAUSED)
-            )   
-        )
+        self.states[MainState.PLAY] = PlayState(self)
+
     def load_pause_frame(self):
         self.states[MainState.PAUSED] = State(self.screen,[])
         cx,cy = self.screen.get_rect().center
@@ -283,6 +274,9 @@ class Game:
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
                     self.running = False
+                if event.key == pg.K_p:
+                    self.set_state(MainState.PAUSED)
+
 
 
     def update(self,dt):
