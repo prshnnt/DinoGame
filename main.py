@@ -275,7 +275,7 @@ class Game:
                 if event.key == pg.K_ESCAPE:
                     self.running = False
                 if event.key == pg.K_p:
-                    self.set_state(MainState.PAUSED)
+                    self.set_state(MainState.PAUSED if self.current_state == MainState.PLAY else MainState.PLAY)
 
 
 
