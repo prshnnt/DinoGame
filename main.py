@@ -74,8 +74,8 @@ class Play:
         self.game = game
         self.pause_button = Button(
                 (5,5,50,50),
-                pg.image.load("assets/menu/yes_01.png").convert_alpha(),
-                pg.image.load("assets/menu/yes_02.png").convert_alpha(),
+                pg.image.load("assets/menu/pause_01.png").convert_alpha(),
+                pg.image.load("assets/menu/pause_02.png").convert_alpha(),
                 lambda: self.game.set_state(MainState.PAUSED)
             )
         pg.display.set_caption(TITLE)
@@ -196,8 +196,8 @@ class Game:
         self.states[MainState.MENU] = State(self.screen,[])
         cx,cy = self.screen.get_rect().center
 
-        box_width = 300
-        box_height = 100
+        box_width = 200
+        box_height = 80
 
         self.states[MainState.MENU].add_object(
             Button(
@@ -209,7 +209,15 @@ class Game:
         )
         self.states[MainState.MENU].add_object(
             Button(
-                (cx - (box_width//2),(box_height//2)*4,box_width,box_height),
+                (cx - (box_width//2),(box_height//2)*3.5,box_width,box_height),
+                pg.image.load("assets/menu/level_01.png").convert_alpha(),
+                pg.image.load("assets/menu/level_02.png").convert_alpha(),
+                # lambda: self.set_state(MainState.PLAY)
+            )   
+        )
+        self.states[MainState.MENU].add_object(
+            Button(
+                (cx - (box_width//2),(box_height//2)*5.8,box_width,box_height),
                 pg.image.load("assets/menu/options_01.png").convert_alpha(),
                 pg.image.load("assets/menu/options_02.png").convert_alpha(),
                 # lambda: self.set_state(MainState.PLAY)
@@ -217,7 +225,7 @@ class Game:
         )
         self.states[MainState.MENU].add_object(
             Button(
-                (cx - (box_width//2),(box_height//2)*7,box_width,box_height),
+                (cx - (box_width//2),(box_height//2)*12,box_width,box_height),
                 pg.image.load("assets/menu/quit_01.png").convert_alpha(),
                 pg.image.load("assets/menu/quit_02.png").convert_alpha(),
                 lambda: self.set_state(MainState.QUIT)
