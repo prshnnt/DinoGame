@@ -1,5 +1,5 @@
-from enum import Enum
 import pygame as pg
+from enum import Enum
 import sys
 from settings import *
 from entities.player import Player , PlayerState
@@ -8,63 +8,19 @@ from entities.platform import Platform
 from core.camera import Camera
 from core.screen_shake import ScreenShake
 from core.parallax import ParallaxBackground
+from core.level import Level as Stage
+from core.Base import Button,MainState , State
 from utils.loader import load_image
-from core.level import Level
-
-class MainState(Enum):
-    MENU = 'menu'
-    PLAY = 'play'
-    PAUSED = 'paused'
-    QUIT = 'quit'
-
-class Button:
-    def __init__(self, rect:pg.Rect|tuple,image1:pg.Surface,image2:pg.Surface,callback=None):
-        self.rect = pg.Rect(rect)
-        self.image1 = pg.transform.scale(image1,(self.rect.width,self.rect.height)).convert_alpha()
-        self.image2 = pg.transform.scale(image2,(self.rect.width,self.rect.height)).convert_alpha()
-        self.callback = callback
-
-        self.image = self.image1
-        self.hovered = False
-        self.clicked = False
-    def update(self,events,mouse_pos):
-        # call callback function if button state is clicked , bas itna samjho jyada dhyan nhi do code pe
-        if self.callback and self.clicked and pg.mouse.get_pressed()[0] == 0:
-            self.callback()
-            self.clicked = False
-            return
-        # set click state of button to true if clicked and hovered
-        if self.rect.collidepoint(mouse_pos):
-            self.hovered = True
-            self.image = self.image2
-            if pg.mouse.get_pressed()[0] == 1 and not self.clicked:
-                self.clicked = True
-                print("Button clicked!"+str(self.callback))
-                
-        else:
-            # set state to false if not clicked
-            self.clicked = False
-            self.hovered = False
-            self.image = self.image1
 
 
-    def draw(self,screen:pg.Surface):
-        screen.blit(self.image,(self.rect.x,self.rect.y))
-
-class State:
-    def __init__(self,screen:pg.Surface,objects):
-        self.screen = screen
-        self.objects = objects
-    def add_object(self,obj):
-        self.objects.append(obj)
-    def remove_object(self,obj):
-        self.objects.remove(obj)
-    def update(self,events,mouse_pos):
-        for obj in self.objects:
-            obj.update(events,mouse_pos)
-    def draw(self):
-        for obj in self.objects:
-            obj.draw(self.screen)
+class Level:
+    def __init__(self,level_index):
+        self.level_index = level_index
+        import json
+        with open(f"levels/level_{self.level_index}.json","r") as f:
+            data = json.load(f)
+        
+        
 
 
 class Play:
@@ -98,7 +54,7 @@ class Play:
 
     def load_level(self, index):
         default = pg.image.load("assets/background/ground.png").convert_alpha()
-        self.level = Level(f"levels/level{index}.json",default)
+        self.level = Stage(f"levels/level{index}.json",default)
         self.player.rect.topleft = self.level.player_start
         
         self.platforms = self.level.platforms
@@ -209,7 +165,7 @@ class Game:
         )
         self.states[MainState.MENU].add_object(
             Button(
-                (cx - (box_width//2),(box_height//2)*3.5,box_width,box_height),
+                (cx - (box_width//2),(box_height//2)*3.3,box_width,box_height),
                 pg.image.load("assets/menu/level_01.png").convert_alpha(),
                 pg.image.load("assets/menu/level_02.png").convert_alpha(),
                 # lambda: self.set_state(MainState.PLAY)
@@ -217,7 +173,7 @@ class Game:
         )
         self.states[MainState.MENU].add_object(
             Button(
-                (cx - (box_width//2),(box_height//2)*5.8,box_width,box_height),
+                (cx - (box_width//2),(box_height//2)*5.6,box_width,box_height),
                 pg.image.load("assets/menu/options_01.png").convert_alpha(),
                 pg.image.load("assets/menu/options_02.png").convert_alpha(),
                 # lambda: self.set_state(MainState.PLAY)
@@ -225,7 +181,7 @@ class Game:
         )
         self.states[MainState.MENU].add_object(
             Button(
-                (cx - (box_width//2),(box_height//2)*12,box_width,box_height),
+                (cx - (box_width//2),(box_height//2)*8,box_width,box_height),
                 pg.image.load("assets/menu/quit_01.png").convert_alpha(),
                 pg.image.load("assets/menu/quit_02.png").convert_alpha(),
                 lambda: self.set_state(MainState.QUIT)

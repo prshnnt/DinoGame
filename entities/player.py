@@ -7,11 +7,6 @@ from enum import Enum
 
 from core.Base import BaseEntity
 
-
-PLAYER_COLOR = (200,50,50)
-
-
-
 class PlayerSprite(Enum):
     DOUX = "assets/player/DinoSprites-doux.png"
     MORT = "assets/player/DinoSprites-mort.png"
@@ -47,6 +42,7 @@ class Player(BaseEntity):
     def handle_input(self):
         keys = pg.key.get_pressed()
         self.vx = 0
+        self.is_ducking = False
         if self.state!= PlayerState.HURT:
             if keys[pg.K_LEFT]:
                 self.vx = -PLAYER_SPEED
@@ -57,8 +53,8 @@ class Player(BaseEntity):
             if keys[pg.K_UP]:
                 self.jump()
                 self.state = PlayerState.JUMP
-            if keys[pg.K_DOWN] and self.on_ground:
-                self.state = PlayerState.DUCK
+            if keys[pg.K_DOWN] and self.on_ground :
+                self.is_ducking = True
             if keys[pg.K_a]:
                 self.state = PlayerState.KICK
                 
@@ -94,6 +90,8 @@ class Player(BaseEntity):
                 self.invincible = False
         if not self.on_ground:
             self.state = PlayerState.JUMP
+        elif self.is_ducking:
+            self.state = PlayerState.DUCK
         elif self.vx != 0:
             self.state = PlayerState.RUN
         else:

@@ -1,5 +1,6 @@
 import pygame as pg
 from settings import *
+from enum import Enum
 
 class BaseObject:
     def __init__(self):
@@ -26,8 +27,6 @@ class BaseObject:
     def move_y(self):
         self.y += self.vy
         self.rect.y = round(self.y)
-
-    
 
         
 class BaseEntity(BaseObject):
@@ -84,5 +83,60 @@ class BaseEntity(BaseObject):
         self.health += amount
     def entity_hurt(self,amount):
         self.health -= amount
-    
-    
+
+class MainState(Enum):
+    MENU = 'menu'
+    PLAY = 'play'
+    PAUSED = 'paused'
+    QUIT = 'quit'   
+
+
+class Button:
+    def __init__(self, rect:pg.Rect|tuple,image1:pg.Surface,image2:pg.Surface,callback=None):
+        self.rect = pg.Rect(rect)
+        self.image1 = pg.transform.scale(image1,(self.rect.width,self.rect.height)).convert_alpha()
+        self.image2 = pg.transform.scale(image2,(self.rect.width,self.rect.height)).convert_alpha()
+        self.callback = callback
+
+        self.image = self.image1
+        self.hovered = False
+        self.clicked = False
+    def update(self,events,mouse_pos):
+        # call callback function if button state is clicked , bas itna samjho jyada dhyan nhi do code pe
+        if self.callback and self.clicked and pg.mouse.get_pressed()[0] == 0:
+            self.callback()
+            self.clicked = False
+            return
+        # set click state of button to true if clicked and hovered
+        if self.rect.collidepoint(mouse_pos):
+            self.hovered = True
+            self.image = self.image2
+            if pg.mouse.get_pressed()[0] == 1 and not self.clicked:
+                self.clicked = True
+                print("Button clicked!"+str(self.callback))
+                
+        else:
+            # set state to false if not clicked
+            self.clicked = False
+            self.hovered = False
+            self.image = self.image1
+
+
+    def draw(self,screen:pg.Surface):
+        screen.blit(self.image,(self.rect.x,self.rect.y))
+
+        
+class State:
+    def __init__(self,screen:pg.Surface,objects):
+        self.screen = screen
+        self.objects = objects
+    def add_object(self,obj):
+        self.objects.append(obj)
+    def remove_object(self,obj):
+        self.objects.remove(obj)
+    def update(self,events,mouse_pos):
+        for obj in self.objects:
+            obj.update(events,mouse_pos)
+    def draw(self):
+        for obj in self.objects:
+            obj.draw(self.screen)
