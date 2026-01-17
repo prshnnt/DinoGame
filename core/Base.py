@@ -127,7 +127,7 @@ class Button:
 
         
 class State:
-    def __init__(self,screen:pg.Surface,objects):
+    def __init__(self,screen:pg.Surface,objects=[]):
         self.screen = screen
         self.objects = objects
     def add_object(self,obj):
