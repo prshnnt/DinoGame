@@ -1,3 +1,4 @@
+import re
 import pygame
 
 
@@ -22,8 +23,8 @@ def get_frame_from_image(image:pygame.Surface,frame_bb,scale):
     frame.blit(image,(0,0),(frame_bb['x'],frame_bb['y'],frame_bb['w'],frame_bb['h']))
     frame = pygame.transform.scale(frame,(frame_bb['w']*scale[0],frame_bb['h']*scale[1]))
     return frame.convert_alpha()
-def extract_frames(image_path,animation_bblist:dict,scale):
-    image = pygame.image.load(image_path).convert_alpha()
+def extract_frames(image_path,animation_bblist:dict,scale,reverse):
+    image = pygame.transform.flip(pygame.image.load(image_path).convert_alpha(),reverse,False).convert_alpha()
     animations = {}
     for i in animation_bblist.keys():
         temp = []
@@ -32,5 +33,5 @@ def extract_frames(image_path,animation_bblist:dict,scale):
         animations[i] = temp
     return animations
 
-def load_animation(image_path,bb_path,scale):
-    return extract_frames(image_path,load_bb(bb_path),scale)
+def load_animation(image_path,bb_path,scale,reverse=False):
+    return extract_frames(image_path,load_bb(bb_path),scale,reverse)

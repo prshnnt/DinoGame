@@ -114,7 +114,8 @@ class Play:
             platform.draw(self.screen,self.camera.apply(platform.rect).move(offset_x,offset_y))
         self.player.draw(self.screen,self.camera)
         for enemy in self.enemies:
-            enemy.draw(self.screen,self.camera)
+            if enemy.alive:
+                enemy.draw(self.screen,self.camera)
         
         self.pause_button.draw(self.screen)
         pg.display.flip()
