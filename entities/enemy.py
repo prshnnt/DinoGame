@@ -5,6 +5,9 @@ from entities.platform import Platform
 from entities.player import  Player
 from core.camera import Camera
 from core.Base import BaseEntity
+from utils.player_state import PlayerState
+from utils.loader import load_animation
+
 
 
 class PlayerSprite(Enum):
@@ -14,14 +17,26 @@ class PlayerSprite(Enum):
     VITA = "assets/player/DinoSprites-vita.png"
 
 class Enemy(BaseEntity):
-    def __init__(self,pos):
+    def __init__(self,pos,sprite:PlayerSprite = PlayerSprite.TARD):
         super().__init__()
-        # --- ADD THESE LINES ---
-        self.x = pos[0]
-        self.y = pos[1]
+        self.state = PlayerState.IDLE
+        # animation 
+        self.animations = {}
+        self.frame_index = 0
+        self.animation_duration= 100
+        self.load_animations(sprite,(3,3))
+        self.image = self.animations[self.state][0]
+
+        self.rect = self.image.get_rect()
+        self.rect.center = (pos[0],pos[1])
+        self.x = self.rect.x
+        self.y = self.rect.y
         # -----------------------
 
         self.vx = -2
+        self.vy = 0
+        self.facing_right = True
+
 
         self.image: pg.Surface = pg.Surface((40, 50))
         self.image.fill((50, 50, 200))
@@ -36,6 +51,16 @@ class Enemy(BaseEntity):
         self.pause_time = 0
         self.pause_duration = 500
         self.speed = 2
+
+        self.kick_timer = 0
+        self.kick_duration = 200
+
+        self.invincible = False
+        self.invincible_timer = 0
+        self.invincible_duration = 1200  # ms
+
+        self.hurt_timer = 0
+        self.hurt_duration = 400
 
     def change_direction(self):
         self.facing_right = self.vx < 0
@@ -91,14 +116,12 @@ class Enemy(BaseEntity):
                 self.vx = self.speed if self.vx <= 0 else -self.speed
 
 
-    def draw(self,screen:pg.Surface,camera:Camera):
-        if self.alive:
-            if self.facing_right:
-                self.image.fill((0,0,0))
-            else:
-                self.image.fill((255,255,255))
-            screen.blit(self.image , camera.apply(self.rect))
 
+    def draw(self, screen, camera):
+        if self.active:
+            screen.blit(self.image, camera.apply(self.rect))
+
+   
     
 
 
@@ -117,16 +140,6 @@ class Player(BaseEntity):
         self.rect.center = (pos[0],pos[1])
         self.x = self.rect.x
         self.y = self.rect.y
-
-        self.kick_timer = 0
-        self.kick_duration = 200
-
-        self.invincible = False
-        self.invincible_timer = 0
-        self.invincible_duration = 1200  # ms
-
-        self.hurt_timer = 0
-        self.hurt_duration = 400
     
                 
     def load_animations(self,sprite:PlayerSprite,scale):
@@ -136,29 +149,10 @@ class Player(BaseEntity):
             temp[PlayerState(i)] = animations[i]
         self.animations = temp
 
-    def hurt(self, direction):
-        if self.invincible:
-            return
-        self.state = PlayerState.HURT
-        self.invincible = True
-        self.invincible_timer = pg.time.get_ticks()
-        self.hurt_timer = pg.time.get_ticks()
-
-        self.vx = 8 * direction
-        self.vy = -6
 
     
         
     def update_state(self):
-        now = pg.time.get_ticks()
-
-        if self.state == PlayerState.HURT:
-            if now - self.hurt_timer > self.hurt_duration:
-                self.state = PlayerState.IDLE
-            return
-        if self.invincible:
-            if now - self.invincible_timer > self.invincible_duration:
-                self.invincible = False
         if not self.on_ground:
             self.state = PlayerState.JUMP
         elif self.vx != 0:
@@ -207,11 +201,4 @@ class Player(BaseEntity):
         self.update_state()
         self.animate(self.state)
 
-
-    def draw(self, screen, camera):
-        if self.invincible:
-            if (pg.time.get_ticks() // 100) % 2 == 0:
-                return
-        screen.blit(self.image, camera.apply(self.rect))
-
-    
+ 
