@@ -15,7 +15,7 @@ class Camera:
         # Clamp camera to level bounds
         self.rect.x = max(0, self.rect.x)
         self.rect.y = max(0, self.rect.y)
-        self.rect.x = min(self.rect.x, self.rect.width - SCREEN_WIDTH)
+        self.rect.x = min(self.rect.x, self.rect.width - SCREEN_WIDTH*2)
         self.rect.y = min(self.rect.y, self.rect.height - SCREEN_HEIGHT)
 
 
