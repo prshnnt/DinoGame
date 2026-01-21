@@ -1,3 +1,4 @@
+import random
 import re
 import pygame as pg
 from enum import Enum
@@ -18,13 +19,15 @@ class PlayerSprite(Enum):
     VITA = "assets/player/DinoSprites-vita.png"
 
 class Enemy(BaseEntity):
-    def __init__(self,pos,sprite:PlayerSprite = PlayerSprite.TARD):
+    def __init__(self,pos,sprite:PlayerSprite = None):
         super().__init__()
         self.state = PlayerState.IDLE
         # animation 
         self.animations = {}
         self.frame_index = 0
         self.animation_duration= 100
+        if sprite is None:
+            sprite = random.choice(list(PlayerSprite))
         self.load_animations(sprite,(3,3),reverse = False)
         self.image = self.animations[self.state][0]
 
