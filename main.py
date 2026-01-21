@@ -9,7 +9,7 @@ from core.camera import Camera
 from core.screen_shake import ScreenShake
 from core.parallax import ParallaxBackground
 from core.level import Level as Stage
-from core.Base import Button,MainState , State
+from core.Base import Button,MainState , State , BaseObject
 from utils.loader import load_image
 
 
@@ -21,7 +21,7 @@ class Level:
             data = json.load(f)
 
 
-class Play:
+class Play(BaseObject):
     def __init__(self,game):
         pg.init()
         self.screen = game.screen
@@ -86,8 +86,8 @@ class Play:
   
 
 
-    def update(self,dt,x):
-        self.pause_button.update(self.game.events,self.game.mouse_pos)
+    def update(self,dt,events,mouse_pos):
+        self.pause_button.update(dt,self.game.events,self.game.mouse_pos)
         if self.player.rect.x >= self.level.end_x:
             self.level_index += 1
             self.player.rect.x = self.level.player_start[0]
@@ -103,7 +103,7 @@ class Play:
         self.handle_enemy_collision()
         self.camera.update(self.player.rect)
 
-    def draw(self,x):
+    def draw(self,screen:pg.Surface):
         offset_x, offset_y = self.screen_shake.update()
 
         self.screen.fill(SKY_BLUE)
@@ -243,7 +243,7 @@ class Game:
 
 
     def update(self,dt):
-        self.states[self.current_state].update(self.events,self.mouse_pos)
+        self.states[self.current_state].update(dt,self.events,self.mouse_pos)
 
 
     def draw(self):

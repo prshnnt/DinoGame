@@ -4,6 +4,15 @@ from enum import Enum
 
 class BaseObject:
     def __init__(self):
+        pass
+    def update(self,dt,events,mouse_pos):
+        pass
+    def draw(self,screen:pg.Surface):
+        pass
+
+        
+class BaseEntity:
+    def __init__(self):
         self.x = 0
         self.y = 0
         self.vx = 0
@@ -13,25 +22,7 @@ class BaseObject:
         self.rect:pg.Rect = None
         self.mask:pg.Mask = None
 
-    def set_image(self,image:pg.Surface):
-        self.image = image
-        self.rect = self.image.get_rect()
-        self.rect.x = self.x
-        self.rect.y = self.y
-        self.mask = pg.mask.from_surface(self.image)
 
-    def move_x(self):
-        self.x += self.vx
-        self.rect.x = round(self.x)
-        
-    def move_y(self):
-        self.y += self.vy
-        self.rect.y = round(self.y)
-
-        
-class BaseEntity(BaseObject):
-    def __init__(self):
-        super().__init__()
         self.on_ground = False
         self.facing_right = True
         self.health = 100
@@ -41,9 +32,23 @@ class BaseEntity(BaseObject):
         self.animation_duration = 100
         self.animation_last_update = pg.time.get_ticks()
 
+    def move_x(self):
+        self.x += self.vx
+        self.rect.x = round(self.x)
+        
+    def move_y(self):
+        self.y += self.vy
+        self.rect.y = round(self.y)
+
     def set_image(self, image: pg.Surface):
         previous_rect = self.rect
-        super().set_image(image)
+
+        self.image = image
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+        self.mask = pg.mask.from_surface(self.image)
+
         if previous_rect:
             self.rect.midbottom = previous_rect.midbottom
             self.x = self.rect.x
@@ -91,7 +96,7 @@ class MainState(Enum):
     QUIT = 'quit'   
 
 
-class Button:
+class Button(BaseObject):
     def __init__(self, rect:pg.Rect|tuple,image1:pg.Surface,image2:pg.Surface,callback=None):
         self.rect = pg.Rect(rect)
         self.image1 = pg.transform.scale(image1,(self.rect.width,self.rect.height)).convert_alpha()
@@ -101,7 +106,7 @@ class Button:
         self.image = self.image1
         self.hovered = False
         self.clicked = False
-    def update(self,events,mouse_pos):
+    def update(self,dt,events,mouse_pos):
         # call callback function if button state is clicked , bas itna samjho jyada dhyan nhi do code pe
         if self.callback and self.clicked and pg.mouse.get_pressed()[0] == 0:
             self.callback()
@@ -126,7 +131,7 @@ class Button:
         screen.blit(self.image,(self.rect.x,self.rect.y))
 
         
-class State:
+class State(BaseObject):
     def __init__(self,screen:pg.Surface,objects=[]):
         self.screen = screen
         self.objects = objects
@@ -134,9 +139,9 @@ class State:
         self.objects.append(obj)
     def remove_object(self,obj):
         self.objects.remove(obj)
-    def update(self,events,mouse_pos):
+    def update(self,dt,events,mouse_pos):
         for obj in self.objects:
-            obj.update(events,mouse_pos)
+            obj.update(dt,events,mouse_pos)
     def draw(self):
         for obj in self.objects:
             obj.draw(self.screen)
