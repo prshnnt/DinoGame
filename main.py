@@ -13,12 +13,7 @@ from core.Base import Button,MainState , State , BaseObject
 from utils.loader import load_image
 
 
-class Level:
-    def __init__(self,level_index):
-        self.level_index = level_index
-        import json
-        with open(f"levels/level_{self.level_index}.json","r") as f:
-            data = json.load(f)
+
 
 
 class Play(BaseObject):
@@ -37,9 +32,10 @@ class Play(BaseObject):
         self.clock = pg.time.Clock()
         self.level_index = 1
         self.player = Player((100,SCREEN_HEIGHT-150))
-
+        
         self.world_width = 3000
         self.world_height = SCREEN_HEIGHT
+        self.load_level(self.level_index)
         self.camera = Camera(self.world_width,self.world_height)
         self.screen_shake = ScreenShake()
         self.parallax = ParallaxBackground()
@@ -48,12 +44,13 @@ class Play(BaseObject):
                 load_image(f"assets/background/plx-{i}.png"),i*0.2
             )
 
-        self.load_level(self.level_index)
 
     def load_level(self, index):
         default = pg.image.load("assets/background/ground.png").convert_alpha()
         self.level = Stage(f"levels/level{index}.json",default)
         self.player.rect.topleft = self.level.player_start
+
+        self.world_width = self.level.end_x
         
         self.platforms = self.level.platforms
         self.enemies = self.level.enemies
@@ -63,7 +60,6 @@ class Play(BaseObject):
             platforms.append(Platform(i*default.get_width(),SCREEN_HEIGHT-default.get_height(),default.get_width(),default.get_height(),default))
         for i in platforms:
             self.platforms.append(i)
-        self.camera.rect.x = 0
 
             
     def handle_enemy_collision(self):
