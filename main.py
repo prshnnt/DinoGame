@@ -27,6 +27,7 @@ class Play(BaseObject):
                 pg.image.load("assets/menu/pause_02.png").convert_alpha(),
                 lambda: self.game.set_state(MainState.PAUSED)
             )
+        
         pg.display.set_caption(TITLE)
 
         self.clock = pg.time.Clock()
@@ -84,12 +85,6 @@ class Play(BaseObject):
 
     def update(self,dt,events,mouse_pos):
         self.pause_button.update(dt,self.game.events,self.game.mouse_pos)
-        # if self.player.rect.x >= self.level.end_x:
-        #     self.level_index += 1
-        #     self.player.rect.x = self.level.player_start[0]
-        #     self.load_level(self.level_index)
-        #     pg.display.set_caption(f"{TITLE} - Level {self.level_index}")
-        #     self.screen_shake.start(10)
 
         self.player.update(dt,self.platforms)
 
