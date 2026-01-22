@@ -245,7 +245,6 @@ class Game:
         self.states[self.current_state].draw()
         pg.draw.circle(self.screen,WHITE,self.mouse_pos,5)
         pg.display.flip()
-        pass
 
     def run(self):
         while self.running:
