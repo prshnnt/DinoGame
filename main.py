@@ -12,10 +12,6 @@ from core.level import Level as Stage
 from core.Base import Button,MainState , State , BaseObject
 from utils.loader import load_image
 
-
-
-
-
 class Play(BaseObject):
     def __init__(self,game):
         pg.init()
