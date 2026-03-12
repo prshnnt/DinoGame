@@ -14,7 +14,7 @@ class Game:
     def run(self):
         while self.running:
             dt = self.clock.tick(60)/1000
-            self.update(dt)
+            self.update()
             self.draw()
         pg.quit()
 if __name__ == "__main__":
