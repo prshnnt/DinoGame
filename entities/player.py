@@ -144,5 +144,3 @@ class Player(BaseEntity):
             if (pg.time.get_ticks() // 100) % 2 == 0:
                 return
         screen.blit(self.image, camera.apply(self.rect))
-
-    
