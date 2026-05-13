@@ -1,102 +1,63 @@
 import random
-import re
 import pygame as pg
 from enum import Enum
 from settings import *
 from entities.platform import Platform
-from entities.player import  Player
+from entities.player import Player
+from entities.enemy_base import EnemyBase
 from core.camera import Camera
-from core.Base import BaseEntity
 from utils.player_state import PlayerState
 from utils.boundingbox import load_animation
 
 
-
-class PlayerSprite(Enum):
+class EnemySprite(Enum):
     DOUX = "assets/player/DinoSprites-doux.png"
     MORT = "assets/player/DinoSprites-mort.png"
     TARD = "assets/player/DinoSprites-tard.png"
     VITA = "assets/player/DinoSprites-vita.png"
 
-class Enemy(BaseEntity):
-    def __init__(self,pos,sprite:PlayerSprite = None):
-        super().__init__()
-        self.state = PlayerState.IDLE
-        # animation 
-        self.animations = {}
-        self.frame_index = 0
-        self.animation_duration= 100
-        if sprite is None:
-            sprite = random.choice(list(PlayerSprite))
-        self.load_animations(sprite,(3,3),reverse = False)
+
+class GroundEnemy(EnemyBase):
+    """Enemy that walks on the ground."""
+
+    def __init__(self, pos):
+        super().__init__(pos)
+        self.load_animations(EnemySprite.TARD, (3, 3))
         self.image = self.animations[self.state][0]
-
-        self.rect = self.image.get_rect()
-        self.rect.center = (pos[0],pos[1])
-        self.x = self.rect.x
-        self.y = self.rect.y
-        # -----------------------
-
-        self.vx = -2
-
-        self.on_ground = False
-        self.alive = True
-        self.active = False # only move when active
-
-        self.pause_time = 0
-        self.pause_duration = 500
         self.speed = 2
-    def animate(self,state):
-        current_time = pg.time.get_ticks()
+        self.vx = -self.speed
+        self.facing_right = False
 
-        if current_time - self.animation_last_update > self.animation_duration:
-            #update frame index
-            self.frame_index += 1
-            if self.frame_index >= len(self.animations[state]):
-                self.frame_index = 0
-            # update image 
-            self.set_image(self.animations[state][self.frame_index])
-            self.animation_last_update = current_time
-            if self.facing_right:
-                self.flip_image()
-    def load_animations(self,sprite:PlayerSprite,scale,reverse = False):
-        animations = load_animation(sprite.value,"assets/player/player_bb.json",scale,reverse)
+    def load_animations(self, sprite: EnemySprite, scale):
+        animations = load_animation(sprite.value, "assets/player/player_bb.json", scale, reverse=False)
         temp = {}
         for i in animations.keys():
             temp[PlayerState(i)] = animations[i]
         self.animations = temp
-    def update_state(self):
-        if not self.on_ground:
-            self.state = PlayerState.JUMP
-        elif self.vx != 0:
-            self.state = PlayerState.RUN
-        else:
-            self.state = PlayerState.IDLE
 
-    def change_direction(self):
-        self.facing_right = self.vx < 0
-
-    def update(self,platforms:list[Platform],camera:Camera,player:Player):
+    def update(self, platforms: list[Platform], camera, player):
         if not self.alive:
             return
-        if not camera.apply(self.rect).colliderect(
-            pg.Rect(0,0,SCREEN_WIDTH,SCREEN_WIDTH)
-        ):
+
+        # Check if player is in view
+        if not camera.apply(self.rect).colliderect(pg.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)):
             self.active = False
             return
         else:
             self.active = True
-            if player.rect.x - self.rect.x>0:
-                self.vx = abs(self.vx)
+            # Move towards player
+            if player.rect.x > self.rect.x:
+                self.vx = self.speed
+                self.facing_right = True
             else:
-                self.vx = -abs(self.vx)
-                
+                self.vx = -self.speed
+                self.facing_right = False
+
         self.apply_gravity()
-        self.change_direction()
         self.update_state()
-        # --- X AXIS MOVEMENT ---
+
+        # X movement and collision
         self.move_x()
-        # X Collision Check
         for platform in platforms:
             if self.rect.colliderect(platform.rect):
                 if self.vx > 0:
@@ -105,13 +66,11 @@ class Enemy(BaseEntity):
                 elif self.vx < 0:
                     self.rect.left = platform.rect.right
                     self.vx = 0
-
                 self.x = self.rect.x
 
-        # --- Y AXIS MOVEMENT ---
+        # Y movement and collision
         self.on_ground = False
         self.move_y()
-        # Y Collision Check
         for platform in platforms:
             if self.rect.colliderect(platform.rect):
                 if self.vy > 0:
@@ -121,11 +80,185 @@ class Enemy(BaseEntity):
                 elif self.vy < 0:
                     self.rect.top = platform.rect.bottom
                     self.vy = 0
-
                 self.y = self.rect.y
-        
+
         self.animate(self.state)
 
 
-    def draw(self, screen, camera):
-        screen.blit(self.image, camera.apply(self.rect))
+class FlyEnemy(EnemyBase):
+    """Enemy that flies in the air."""
+
+    def __init__(self, pos):
+        super().__init__(pos)
+        self.load_animations(EnemySprite.VITA, (3, 3))
+        self.image = self.animations[self.state][0]
+        self.speed = 3
+        self.vx = -self.speed
+        self.facing_right = False
+        self.flying = True
+
+    def load_animations(self, sprite: EnemySprite, scale):
+        animations = load_animation(sprite.value, "assets/player/player_bb.json", scale, reverse=False)
+        temp = {}
+        for i in animations.keys():
+            temp[PlayerState(i)] = animations[i]
+        self.animations = temp
+
+    def update(self, platforms: list[Platform], camera, player):
+        if not self.alive:
+            return
+
+        # Check if player is in view
+        if not camera.apply(self.rect).colliderect(pg.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)):
+            self.active = False
+            return
+        else:
+            self.active = True
+            # Move towards player
+            if player.rect.x > self.rect.x:
+                self.vx = self.speed
+                self.facing_right = True
+            else:
+                self.vx = -self.speed
+                self.facing_right = False
+
+        self.update_state()
+
+        # X movement and collision (no gravity for flying enemies)
+        self.move_x()
+        for platform in platforms:
+            if self.rect.colliderect(platform.rect):
+                if self.vx > 0:
+                    self.rect.right = platform.rect.left
+                    self.vx = 0
+                elif self.vx < 0:
+                    self.rect.left = platform.rect.right
+                    self.vx = 0
+                self.x = self.rect.x
+
+        # Y movement (can move up/down, e.g., bobbing or tracking player height)
+        self.y += self.vy
+        self.rect.y = round(self.y)
+
+        self.animate(self.state)
+
+    def apply_gravity(self):
+        """Override - flying enemies don't fall."""
+        pass
+
+
+class ShooterEnemy(EnemyBase):
+    """Enemy that shoots bullets at the player."""
+
+    def __init__(self, pos):
+        super().__init__(pos)
+        self.load_animations(EnemySprite.MORT, (3, 3))
+        self.image = self.animations[self.state][0]
+        self.speed = 1.5
+        self.vx = -self.speed
+        self.facing_right = False
+
+        # Shooting mechanics
+        self.shoot_timer = 0
+        self.shoot_cooldown = 1500  # ms between shots
+        self.bullets = []
+
+    def load_animations(self, sprite: EnemySprite, scale):
+        animations = load_animation(sprite.value, "assets/player/player_bb.json", scale, reverse=False)
+        temp = {}
+        for i in animations.keys():
+            temp[PlayerState(i)] = animations[i]
+        self.animations = temp
+
+    def shoot(self, player: Player):
+        """Create a bullet towards the player."""
+        # Determine direction
+        if player.rect.x > self.rect.x:
+            bullet_vx = 8
+        else:
+            bullet_vx = -8
+
+        # Create bullet at enemy position
+        from entities.bullet import Bullet
+        bullet = Bullet(self.rect.centerx, self.rect.centery, bullet_vx)
+        self.bullets.append(bullet)
+
+    def update(self, platforms: list[Platform], camera, player):
+        if not self.alive:
+            return
+
+        # Check if player is in view
+        if not camera.apply(self.rect).colliderect(pg.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)):
+            self.active = False
+            return
+        else:
+            self.active = True
+            # Move towards player
+            if player.rect.x > self.rect.x:
+                self.vx = self.speed
+                self.facing_right = True
+            else:
+                self.vx = -self.speed
+                self.facing_right = False
+
+        self.apply_gravity()
+        self.update_state()
+
+        # X movement and collision
+        self.move_x()
+        for platform in platforms:
+            if self.rect.colliderect(platform.rect):
+                if self.vx > 0:
+                    self.rect.right = platform.rect.left
+                    self.vx = 0
+                elif self.vx < 0:
+                    self.rect.left = platform.rect.right
+                    self.vx = 0
+                self.x = self.rect.x
+
+        # Y movement and collision
+        self.on_ground = False
+        self.move_y()
+        for platform in platforms:
+            if self.rect.colliderect(platform.rect):
+                if self.vy > 0:
+                    self.rect.bottom = platform.rect.top
+                    self.vy = 0
+                    self.on_ground = True
+                elif self.vy < 0:
+                    self.rect.top = platform.rect.bottom
+                    self.vy = 0
+                self.y = self.rect.y
+
+        # Shooting logic
+        now = pg.time.get_ticks()
+        self.shoot_timer += 16  # Approximate frame time
+        if self.shoot_timer >= self.shoot_cooldown and self.active:
+            self.shoot(player)
+            self.shoot_timer = 0
+
+        self.animate(self.state)
+
+    def update_bullets(self, platforms: list[Platform]):
+        """Update all bullets and remove ones that hit something."""
+        for bullet in self.bullets[:]:
+            bullet.update(platforms)
+            if not bullet.alive:
+                self.bullets.remove(bullet)
+
+    def draw_bullets(self, screen, camera):
+        """Draw all bullets."""
+        for bullet in self.bullets:
+            bullet.draw(screen, camera)
+
+
+def create_enemy(enemy_type: str, pos):
+    """Factory function to create different enemy types."""
+    if enemy_type == "ground":
+        return GroundEnemy(pos)
+    elif enemy_type == "fly":
+        return FlyEnemy(pos)
+    elif enemy_type == "shooter":
+        return ShooterEnemy(pos)
+    else:
+        raise ValueError(f"Unknown enemy type: {enemy_type}")
