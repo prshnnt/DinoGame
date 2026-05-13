@@ -24,6 +24,10 @@ class GroundEnemy(EnemyBase):
         super().__init__(pos)
         self.load_animations(EnemySprite.TARD, (3, 3))
         self.image = self.animations[self.state][0]
+        self.rect = self.image.get_rect()
+        self.rect.center = (pos[0], pos[1])
+        self.x = self.rect.x
+        self.y = self.rect.y
         self.speed = 2
         self.vx = -self.speed
         self.facing_right = False
@@ -92,6 +96,10 @@ class FlyEnemy(EnemyBase):
         super().__init__(pos)
         self.load_animations(EnemySprite.VITA, (3, 3))
         self.image = self.animations[self.state][0]
+        self.rect = self.image.get_rect()
+        self.rect.center = (pos[0], pos[1])
+        self.x = self.rect.x
+        self.y = self.rect.y
         self.speed = 3
         self.vx = -self.speed
         self.facing_right = False
@@ -154,6 +162,10 @@ class ShooterEnemy(EnemyBase):
         super().__init__(pos)
         self.load_animations(EnemySprite.MORT, (3, 3))
         self.image = self.animations[self.state][0]
+        self.rect = self.image.get_rect()
+        self.rect.center = (pos[0], pos[1])
+        self.x = self.rect.x
+        self.y = self.rect.y
         self.speed = 1.5
         self.vx = -self.speed
         self.facing_right = False

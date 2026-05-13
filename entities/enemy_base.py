@@ -15,10 +15,9 @@ class EnemyBase(BaseEntity):
         self.frame_index = 0
         self.animation_duration = 100
 
-        self.rect = self.image.get_rect()
-        self.rect.center = (pos[0], pos[1])
-        self.x = self.rect.x
-        self.y = self.rect.y
+        # rect will be set in subclass after loading image
+        self.x = pos[0]
+        self.y = pos[1]
 
         self.vx = 0
         self.vy = 0

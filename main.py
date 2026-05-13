@@ -5,6 +5,7 @@ from settings import *
 from entities.player import Player , PlayerState
 from entities.enemy import Enemy
 from entities.platform import Platform
+from entities.bullet import Bullet
 from core.camera import Camera
 from core.screen_shake import ScreenShake
 from core.parallax import ParallaxBackground
@@ -28,8 +29,8 @@ class Play(BaseObject):
 
         self.clock = pg.time.Clock()
         self.level_index = 1
-        self.player = Player((100,SCREEN_HEIGHT-150))
-        
+        self.player = Player((100, SCREEN_HEIGHT - 150))
+
         self.world_width = 3000
         self.world_height = SCREEN_HEIGHT
         self.load_level(self.level_index)
@@ -85,7 +86,17 @@ class Play(BaseObject):
         self.player.update(dt,self.platforms)
 
         for enemy in self.enemies:
-            enemy.update(self.platforms,self.camera,self.player)
+            if hasattr(enemy, 'bullets'):
+                enemy.update_bullets(self.platforms)
+            enemy.update(self.platforms, self.camera, self.player)
+
+        # Check bullet collisions with player
+        for enemy in self.enemies:
+            if hasattr(enemy, 'bullets'):
+                for bullet in enemy.bullets:
+                    if bullet.alive and self.player.rect.colliderect(bullet.rect):
+                        direction = -1 if bullet.vx > 0 else 1
+                        self.player.hurt(direction)
 
         self.handle_enemy_collision()
         self.camera.update(self.player.rect)
@@ -102,8 +113,10 @@ class Play(BaseObject):
         self.player.draw(self.screen,self.camera)
         for enemy in self.enemies:
             if enemy.alive:
-                enemy.draw(self.screen,self.camera)
-        
+                enemy.draw(self.screen, self.camera)
+                if hasattr(enemy, 'draw_bullets'):
+                    enemy.draw_bullets(self.screen, self.camera)
+
         self.pause_button.draw(self.screen)
         pg.display.flip()
 
