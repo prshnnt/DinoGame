@@ -3,7 +3,6 @@ from enum import Enum
 import sys
 from settings import *
 from entities.player import Player , PlayerState
-from entities.enemy import Enemy
 from entities.platform import Platform
 from entities.bullet import Bullet
 from core.camera import Camera
