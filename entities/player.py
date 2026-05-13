@@ -107,11 +107,12 @@ class Player(BaseEntity):
             if self.rect.colliderect(platform.rect):
                 if self.vx > 0:
                     self.rect.right = platform.rect.left
+                    self.vx = 0
                 elif self.vx < 0:
                     self.rect.left = platform.rect.right
-                
-                # CRITICAL FIX: Sync self.x with the new rect position
-                self.x = self.rect.x 
+                    self.vx = 0
+
+                self.x = self.rect.x
 
         # --- Y AXIS MOVEMENT ---
         self.on_ground = False
@@ -126,8 +127,7 @@ class Player(BaseEntity):
                 elif self.vy < 0:
                     self.rect.top = platform.rect.bottom
                     self.vy = 0
-                
-                # CRITICAL FIX: Sync self.y with the new rect position
+
                 self.y = self.rect.y
         
 
